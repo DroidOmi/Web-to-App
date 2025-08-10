@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Web → Android (Demo) | Canva Code</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+  <meta name="description" content="Turn any website link into a ready-to-build Android wrapper (Demo). Download starter files and follow simple steps to create APK or AAB." />
+  <style>
+    /* Geometric background animations */
+    .float-slow { animation: float 14s ease-in-out infinite; }
+    .float-med { animation: float 10s ease-in-out infinite; }
+    .float-fast { animation: float 7s ease-in-out infinite; }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+      50% { transform: translateY(-20px) rotate(6deg) scale(1.03); }
+    }
+    .spin-slow { animation: spin 30s linear infinite; }
+    .pulse-soft { animation: pulseSoft 4s ease-in-out infinite; }
+    @keyframes pulseSoft {
+      0%,100% { opacity: .7; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.03); }
+    }
+
+    /* Fancy scrollbars for code blocks */
+    .thin-scroll::-webkit-scrollbar { height: 8px; width: 8px; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 999px; }
+    .thin-scroll::-webkit-scrollbar-track { background: transparent; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-indigo-600 via-sky-600 to-cyan-500 text-white relative overflow-x-hidden">
+  <!-- Decorative geometric shapes -->
+  <div aria-hidden="true" class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -top-24 -left-24 w-72 h-72 bg-white/10 rounded-3xl float-med blur-sm"></div>
+    <div class="absolute top-10 right-10 w-40 h-40 bg-white/10 rounded-full float-slow"></div>
+    <div class="absolute bottom-16 left-12 w-24 h-24 bg-white/10 rotate-45 float-fast"></div>
+    <div class="absolute bottom-1/3 right-1/4">
+      <svg class="w-40 h-40 opacity-40 spin-slow" viewBox="0 0 100 100" fill="none">
+        <polygon points="50,10 90,90 10,90" stroke="white" stroke-opacity=".6" stroke-width="2" fill="white" fill-opacity=".06"/>
+      </svg>
+    </div>
+    <div class="absolute top-1/3 left-1/5">
+      <svg class="w-28 h-28 opacity-40 float-med" viewBox="0 0 100 100" fill="none">
+        <circle cx="50" cy="50" r="44" stroke="white" stroke-opacity=".6" stroke-width="2" fill="white" fill-opacity=".06"/>
+      </svg>
+    </div>
+  </div>
+
+  <main class="relative z-10 max-w-6xl mx-auto px-6 py-12 md:py-16">
+    <!-- Header -->
+    <header class="text-center mb-10 md:mb-14">
+      <div class="inline-flex items-center gap-2 bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-full text-sm font-medium mb-4 border border-white/15">
+        <span class="inline-flex w-2 h-2 rounded-full bg-amber-300 animate-pulse"></span>
+        Demo • In-browser generation of real APK/AAB isn’t possible
+      </div>
+      <h1 class="text-3xl md:text-5xl font-bold leading-tight">
+        Web → Android Wrapper
+      </h1>
+      <p class="mt-3 md:mt-4 text-white/85 max-w-2xl mx-auto">
+        Enter a website link and get a ready-to-build Android starter pack.
+        Follow the simple steps to create APK or AAB in Android Studio.
+      </p>
+    </header>
+
+    <!-- Card -->
+    <section class="bg-white/10 backdrop-blur-xl border border-white/15 rounded-2xl p-6 md:p-8 shadow-xl">
+      <!-- Form -->
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="md:col-span-2">
+          <label class="block text-sm text-white/80 mb-2">Website link</label>
+          <div class="flex gap-3">
+            <input id="siteUrl" type="url" placeholder="https://example.com"
+                   class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/40" />
+            <button id="previewBtn"
+                    class="whitespace-nowrap px-4 py-3 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition"
+                    title="Open in a new tab">
+              Preview
+            </button>
+          </div>
+          <p id="urlHint" class="text-xs text-white/70 mt-2">Use a full link that starts with https://</p>
+        </div>
+        <div>
+          <label class="block text-sm text-white/80 mb-2">App name</label>
+          <input id="appName" type="text" placeholder="My Awesome App"
+                 class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/40" />
+          <p class="text-xs text-white/70 mt-2">Will appear on the launcher</p>
+        </div>
+      </div>
+
+      <!-- Options -->
+      <div class="grid md:grid-cols-3 gap-6 mt-6">
+        <div>
+          <label class="block text-sm text-white/80 mb-2">Target builds</label>
+          <div class="flex items-center gap-3">
+            <label class="inline-flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg border border-white/15">
+              <input id="optApk" type="checkbox" class="accent-white" checked />
+              <span>APK</span>
+            </label>
+            <label class="inline-flex items-center gap-2 bg-white/10 px-3 py-2 rounded-lg border border-white/15">
+              <input id="optAab" type="checkbox" class="accent-white" checked />
+              <span>AAB</span>
+            </label>
+          </div>
+          <p class="text-xs text-white/70 mt-2">Choose one or both</p>
+        </div>
+        <div>
+          <label class="block text-sm text-white/80 mb-2">Package name</label>
+          <div class="flex gap-2">
+            <input id="pkgName" type="text" placeholder="com.example.app"
+                   class="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 placeholder-white/60 text-white focus:outline-none focus:ring-2 focus:ring-white/40" />
+            <button id="suggestPkg"
+                    class="px-3 py-3 rounded-xl bg-white/10 border border-white/20 hover:bg-white/20 transition"
+                    title="Suggest from link">
+              Suggest
+            </button>
+          </div>
+          <p class="text-xs text-white/70 mt-2">Reverse domain format</p>
+        </div>
+        <div>
+          <label class="block text-sm text-white/80 mb-2">Icon color</label>
+          <div class="flex items-center gap-3">
+            <input id="iconColor" type="color" value="#10b981" class="w-12 h-12 rounded-xl border border-white/20 bg-white/10 p-1"/>
+            <div id="iconPreview" class="flex-1 h-12 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center text-white/80 text-sm">
+              Icon preview
+            </div>
+          </div>
+          <p class="text-xs text-white/70 mt-2">A simple geometric icon will be generated</p>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 mt-8">
+        <button id="convertBtn"
+                class="flex-1 bg-white text-slate-900 font-semibold px-5 py-3 rounded-xl hover:bg-white/90 transition shadow-lg shadow-black/10">
+          Convert (Demo)
+        </button>
+        <button id="resetBtn"
+                class="sm:w-40 bg-white/10 border border-white/20 px-5 py-3 rounded-xl hover:bg-white/20 transition">
+          Reset
+        </button>
+      </div>
+
+      <!-- Progress -->
+      <div id="progressWrap" class="mt-8 hidden">
+        <div class="flex items-center gap-3 mb-2">
+          <div class="w-2 h-2 rounded-full bg-emerald-300 animate-pulse"></div>
+          <span id="progressText" class="text-white/90">Starting…</span>
+        </div>
+        <div class="w-full h-2 bg-white/10 rounded-full overflow-hidden">
+          <div id="progressBar" class="h-full bg-gradient-to-r from-emerald-300 via-sky-300 to-indigo-300 rounded-full transition-all duration-500" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Results -->
+      <div id="results" class="mt-8 hidden">
+        <!-- Steps modal -->
+        <div id="stepsModal" class="fixed inset-0 z-50 hidden items-center justify-center p-6">
+          <div class="absolute inset-0 bg-black/60"></div>
+          <div class="relative max-w-3xl w-full bg-white text-slate-900 rounded-2xl shadow-2xl overflow-hidden">
+            <div class="flex items-center justify-between px-6 py-4 border-b">
+              <h3 class="text-lg font-semibold">Build steps</h3>
+              <button id="closeSteps" class="px-3 py-1.5 rounded-lg bg-slate-900 text-white">Close</button>
+            </div>
+            <div class="p-6 max-h-[70vh] overflow-auto thin-scroll">
+              <div id="readmeContent" class="hidden">
+                <pre class="text-sm whitespace-pre-wrap"></pre>
+              </div>
+              <ol id="stepsList" class="space-y-4">
+                <li>
+                  <div class="font-semibold">1) Create a project</div>
+                  <p class="text-slate-700">Open Android Studio → New Project → Empty Views Activity. Set your package and app name.</p>
+                </li>
+                <li>
+                  <div class="font-semibold">2) Replace files</div>
+                  <p class="text-slate-700">Replace the manifest, activity, layout, and gradle files with the ones you downloaded.</p>
+                </li>
+                <li>
+                  <div class="font-semibold">3) Sync and run</div>
+                  <p class="text-slate-700">Click Sync Now. Then run on a device or emulator.</p>
+                </li>
+                <li>
+                  <div class="font-semibold">4) Create APK / AAB</div>
+                  <p class="text-slate-700">Build → Generate Signed Bundle/APK → choose APK or Android App Bundle (AAB).</p>
+                </li>
+              </ol>
+            </div>
+          </div>
+        </div>
+        <div class="grid lg:grid-cols-3 gap-6">
+          <!-- Summary -->
+          <div class="bg-white/10 border border-white/15 rounded-xl p-5">
+            <h3 class="font-semibold text-lg mb-3">Summary</h3>
+            <ul class="space-y-2 text-white/90">
+              <li><span class="text-white/60">App:</span> <span id="sumName">—</span></li>
+              <li><span class="text-white/60">Link:</span> <span id="sumLink" class="break-all">—</span></li>
+              <li><span class="text-white/60">Package:</span> <span id="sumPkg">—</span></li>
+              <li><span class="text-white/60">Targets:</span> <span id="sumTargets">—</span></li>
+            </ul>
+            <button id="openSite"
+                    class="mt-4 w-full bg-white/10 border border-white/20 px-4 py-2.5 rounded-lg hover:bg-white/20 transition">
+              Open your site
+            </button>
+          </div>
+
+          <!-- Downloads -->
+          <div class="lg:col-span-2 bg-white/10 border border-white/15 rounded-xl p-5">
+            <div class="flex items-center justify-between">
+              <h3 class="font-semibold text-lg">Starter files</h3>
+              <span class="text-xs text-amber-200 bg-amber-400/10 border border-amber-300/30 rounded-full px-2 py-1">Demo</span>
+            </div>
+            <p class="text-white/80 mt-1 mb-4">Download each file and follow the steps below in Android Studio.</p>
+
+            <div class="grid md:grid-cols-2 gap-3">
+              <button data-file="manifest" class="dl btn w-full">AndroidManifest.xml</button>
+              <button data-file="activity" class="dl btn w-full">MainActivity.kt</button>
+              <button data-file="layout" class="dl btn w-full">activity_main.xml</button>
+              <button data-file="gradle" class="dl btn w-full">app-level build.gradle</button>
+              <button data-file="projectGradle" class="dl btn w-full">project build.gradle</button>
+              <button data-file="settingsGradle" class="dl btn w-full">settings.gradle</button>
+              <button data-file="pwa" class="dl btn w-full">manifest.json (PWA)</button>
+              <button data-file="icon" class="dl btn w-full">icon.svg</button>
+              <button id="viewReadme" class="btn w-full">View Build Steps</button>
+              <button id="viewReadmeFull" class="btn w-full">View README</button>
+              <button data-file="readme" class="dl btn w-full">Download README</button>
+              <button id="zipAll" class="btn w-full md:col-span-2">Download Starter Pack (.zip)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- How-to -->
+        <div class="mt-6 bg-white/10 border border-white/15 rounded-xl p-5">
+          <h3 class="font-semibold text-lg mb-3">How to finish the build</h3>
+          <ol class="grid md:grid-cols-4 gap-4 text-white/90">
+            <li class="bg-white/10 border border-white/15 rounded-lg p-4">
+              <div class="font-semibold">1) Prepare</div>
+              <p class="text-white/80 text-sm mt-1">Install Android Studio. Ensure you can build a sample app.</p>
+              <ul class="list-disc list-inside text-white/70 text-xs mt-2 space-y-1">
+                <li>Install SDKs and tools on first launch</li>
+                <li>Enable USB debugging on your device (optional)</li>
+              </ul>
+            </li>
+            <li class="bg-white/10 border border-white/15 rounded-lg p-4">
+              <div class="font-semibold">2) Create project</div>
+              <p class="text-white/80 text-sm mt-1">New Empty Views Activity using your package name and app name.</p>
+              <ul class="list-disc list-inside text-white/70 text-xs mt-2 space-y-1">
+                <li>Minimum SDK: 24+</li>
+                <li>Language: Kotlin</li>
+              </ul>
+            </li>
+            <li class="bg-white/10 border border-white/15 rounded-lg p-4">
+              <div class="font-semibold">3) Replace files</div>
+              <p class="text-white/80 text-sm mt-1">Paste the downloaded files in the right places, then sync.</p>
+              <ul class="list-disc list-inside text-white/70 text-xs mt-2 space-y-1">
+                <li>Replace AndroidManifest.xml</li>
+                <li>Replace MainActivity.kt and set your package</li>
+                <li>Replace activity_main.xml</li>
+                <li>Update app-level and project build files</li>
+              </ul>
+            </li>
+            <li class="bg-white/10 border border-white/15 rounded-lg p-4">
+              <div class="font-semibold">4) Build</div>
+              <p class="text-white/80 text-sm mt-1">Build APK for testing, or AAB for Play Console.</p>
+              <ul class="list-disc list-inside text-white/70 text-xs mt-2 space-y-1">
+                <li>Build → Generate Signed Bundle/APK</li>
+                <li>Create a keystore if you don’t have one</li>
+                <li>Select APK for testing or AAB for store</li>
+              </ul>
+            </li>
+          </ol>
+          <p class="text-xs text-white/70 mt-4">Tip: For a browser-based approach to the Play Store, look into Trusted Web Activity tools like Bubblewrap.</p>
+        </div>
+      </div>
+
+      <!-- Fine print -->
+      <p class="text-white/75 text-xs mt-8">
+        Note: This is a demo experience. Turning a link directly into a signed APK/AAB fully in the browser isn’t possible.
+        These starter files help you finish the build safely in Android Studio.
+      </p>
+    </section>
+  </main>
+
+  <!-- Button styling -->
+  <style>
+    .btn {
+      background: linear-gradient(135deg, rgba(255,255,255,.95), rgba(255,255,255,.85));
+      color: #0f172a;
+      font-weight: 600;
+      border-radius: 0.75rem;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 10px 20px rgba(0,0,0,.12);
+      transition: transform .12s ease, box-shadow .2s ease, opacity .2s ease;
+    }
+    .btn:hover { transform: translateY(-1px); box-shadow: 0 14px 24px rgba(0,0,0,.16); }
+    .btn:active { transform: translateY(0); }
+  </style>
+
+  <script>
+    // Helpers
+    const $ = (sel) => document.querySelector(sel);
+    const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+    function isValidUrl(value) {
+      try { const u = new URL(value); return u.protocol === 'https:' || u.protocol === 'http:'; }
+      catch { return false; }
+    }
+
+    function titleFromUrl(url) {
+      try {
+        const u = new URL(url);
+        const host = u.hostname.replace('www.', '');
+        const parts = host.split('.');
+        const core = parts[parts.length - 2] || host;
+        return core.charAt(0).toUpperCase() + core.slice(1);
+      } catch { return ''; }
+    }
+
+    function suggestPackageFromUrl(url) {
+      try {
+        const u = new URL(url);
+        const host = u.hostname.replace(/^www\./, '');
+        const pieces = host.split('.').reverse().map(p => p.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()).filter(Boolean);
+        if (pieces.length < 2) pieces.push('app');
+        return pieces.join('.');
+      } catch {
+        return 'com.example.app';
+      }
+    }
+
+    function downloadText(filename, content) {
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    function downloadSVG(filename, svg) {
+      const blob = new Blob([svg], { type: 'image/svg+xml' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    async function downloadZip(files) {
+      const zip = new JSZip();
+      for (const f of files) {
+        zip.file(f.name, f.content);
+      }
+      const blob = await zip.generateAsync({ type: 'blob' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'android-starter-pack.zip';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+
+    // File generators
+    function genManifestXml(pkg, appName, siteUrl) {
+      const needsClearText = siteUrl.startsWith('http://');
+      return `<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="${pkg}">
+    <uses-permission android:name="android.permission.INTERNET"/>
+    ${needsClearText ? '<application android:usesCleartextTraffic="true"' : '<application'}
+        android:label="${appName}"
+        android:icon="@mipmap/ic_launcher"
+        android:allowBackup="true"
+        android:theme="@style/Theme.AppCompat.Light.NoActionBar">
+        <activity android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>
+`;
+    }
+
+    function genMainActivityKotlin(siteUrl) {
+      return `package PLACEHOLDER_PACKAGE
+
+import android.annotation.SuppressLint
+import androidx.appcompat.app.AppCompatActivity
+import android.os.Bundle
+import android.webkit.WebSettings
+import android.webkit.WebView
+import android.webkit.WebViewClient
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var webView: WebView
+
+    @SuppressLint("SetJavaScriptEnabled")
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        webView = findViewById(R.id.webview)
+        val settings: WebSettings = webView.settings
+        settings.javaScriptEnabled = true
+        settings.domStorageEnabled = true
+        settings.allowFileAccess = true
+        settings.loadsImagesAutomatically = true
+        webView.webViewClient = object: WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView?, url: String?): Boolean {
+                return false
+            }
+        }
+        webView.loadUrl("${siteUrl}")
+    }
+
+    override fun onBackPressed() {
+        if (this::webView.isInitialized && webView.canGoBack()) {
+            webView.goBack()
+        } else {
+            super.onBackPressed()
+        }
+    }
+}
+`;
+    }
+
+    function genActivityLayoutXml() {
+      return `<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <WebView
+        android:id="@+id/webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+</FrameLayout>
+`;
+    }
+
+    function genGradleApp(pkg, appName) {
+      return `plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace '${pkg}'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId '${pkg}'
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.12.0'
+}
+`;
+    }
+
+    function genGradleProject() {
+      return `buildscript {
+    ext.kotlin_version = '1.9.23'
+    repositories {
+        google()
+        mavenCentral()
+    }
+    dependencies {
+        classpath 'com.android.tools.build:gradle:8.5.0'
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+task clean(type: Delete) {
+    delete rootProject.buildDir
+}
+`;
+    }
+
+    function genSettingsGradle(appName) {
+      const safe = appName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+      return `pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+rootProject.name = "${safe || 'web-wrapper'}"
+include ':app'
+`;
+    }
+
+    function genPwaManifest(appName, iconColor) {
+      return `{
+  "name": "${appName}",
+  "short_name": "${appName.slice(0, 12)}",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "${iconColor}",
+  "theme_color": "${iconColor}",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}
+`;
+    }
+
+    function genIconSvg(hex) {
+      // Simple geometric icon with layered shapes
+      return `<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="${hex}"/>
+      <stop offset="100%" stop-color="#111827"/>
+    </linearGradient>
+  </defs>
+  <rect x="0" y="0" width="512" height="512" rx="96" fill="url(#g)"/>
+  <g opacity="0.15">
+    <circle cx="380" cy="132" r="90" fill="#ffffff"/>
+    <rect x="60" y="300" width="200" height="200" rx="24" fill="#ffffff"/>
+    <polygon points="260,120 420,420 100,420" fill="#ffffff"/>
+  </g>
+  <g fill="#ffffff">
+    <circle cx="180" cy="170" r="34" opacity="0.9"/>
+    <rect x="230" y="210" width="180" height="34" rx="17" opacity="0.95"/>
+    <rect x="140" y="270" width="270" height="34" rx="17" opacity="0.92"/>
+  </g>
+</svg>`;
+    }
+
+    function genReadme(appName, pkg, url, wantApk, wantAab) {
+      return `# ${appName} — Android WebView Wrapper (Demo Starter)
+This starter was generated from: ${url}
+
+What you have:
+- AndroidManifest.xml
+- MainActivity.kt
+- activity_main.xml
+- build.gradle (app + project) and settings.gradle
+- icon.svg
+- manifest.json (PWA, optional)
+
+Next steps (Android Studio):
+1) Open Android Studio → New Project → Empty Views Activity
+   - Package name: ${pkg}
+   - Minimum SDK: 24 or higher
+2) Place files:
+   - app/src/main/AndroidManifest.xml → replace with the provided one
+   - app/src/main/java/.../MainActivity.kt → replace contents and set correct package
+   - app/src/main/res/layout/activity_main.xml → replace with provided layout
+   - app/build.gradle → replace with provided app-level gradle file
+   - settings.gradle + project build.gradle → replace at project root
+   - app/src/main/res/mipmap-* → replace launcher icons (you can convert icon.svg)
+3) In MainActivity.kt, set the right package at the top (matches ${pkg}).
+4) Sync Gradle and run.
+
+Build commands:
+- APK (Release): Build → Generate Signed Bundle/APK → APK
+- AAB (Play Store): Build → Generate Signed Bundle/APK → Android App Bundle
+
+Notes:
+- Your site is loaded inside a WebView. Make sure it works on mobile and uses https (or enable cleartext in the manifest).
+- For a more integrated Play Store experience, explore Trusted Web Activity (Bubblewrap).
+
+This project is a demo. APK/AAB creation must happen in Android Studio or a secure build system.`;
+    }
+
+    // UI Logic
+    const siteUrl = $('#siteUrl');
+    const appName = $('#appName');
+    const pkgName = $('#pkgName');
+    const suggestPkgBtn = $('#suggestPkg');
+    const convertBtn = $('#convertBtn');
+    const resetBtn = $('#resetBtn');
+    const previewBtn = $('#previewBtn');
+    const progressWrap = $('#progressWrap');
+    const progressText = $('#progressText');
+    const progressBar = $('#progressBar');
+    const results = $('#results');
+    const sumName = $('#sumName');
+    const sumLink = $('#sumLink');
+    const sumPkg = $('#sumPkg');
+    const sumTargets = $('#sumTargets');
+    const openSiteBtn = $('#openSite');
+    const optApk = $('#optApk');
+    const optAab = $('#optAab');
+    const iconColor = $('#iconColor');
+    const iconPreview = $('#iconPreview');
+    const zipAllBtn = document.getElementById('zipAll');
+    const viewReadmeBtn = document.getElementById('viewReadme');
+    const stepsModal = document.getElementById('stepsModal');
+    const closeStepsBtn = document.getElementById('closeSteps');
+
+    // Live helpers
+    siteUrl.addEventListener('input', () => {
+      if (!appName.value) appName.value = titleFromUrl(siteUrl.value);
+      if (!pkgName.value && isValidUrl(siteUrl.value)) pkgName.value = suggestPackageFromUrl(siteUrl.value);
+    });
+
+    suggestPkgBtn.addEventListener('click', () => {
+      if (isValidUrl(siteUrl.value)) {
+        pkgName.value = suggestPackageFromUrl(siteUrl.value);
+        pulse(iconColor);
+      } else {
+        alert('Please enter a valid link first.');
+      }
+    });
+
+    previewBtn.addEventListener('click', () => {
+      const url = siteUrl.value.trim();
+      if (!isValidUrl(url)) { alert('Please enter a valid link that starts with http(s)://'); return; }
+      window.open(url, '_blank');
+    });
+
+    iconColor.addEventListener('input', () => {
+      updateIconPreview();
+    });
+
+    function updateIconPreview() {
+      const svg = genIconSvg(iconColor.value);
+      iconPreview.innerHTML = '';
+      const img = document.createElement('img');
+      img.alt = 'Icon preview';
+      img.className = 'h-8';
+      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svg)));
+      iconPreview.appendChild(img);
+    }
+    updateIconPreview();
+
+    // Convert (Demo)
+    convertBtn.addEventListener('click', () => {
+      const url = siteUrl.value.trim();
+      const name = appName.value.trim() || 'My App';
+      const pkg = (pkgName.value.trim() || suggestPackageFromUrl(url)).replace(/[^a-z0-9.]/gi, '').toLowerCase();
+      const wantApk = optApk.checked;
+      const wantAab = optAab.checked;
+
+      if (!isValidUrl(url)) { alert('Please enter a valid link that starts with http(s)://'); return; }
+      if (!wantApk && !wantAab) { alert('Select at least one target (APK or AAB).'); return; }
+
+      // Fill summary
+      sumName.textContent = name;
+      sumLink.textContent = url;
+      sumPkg.textContent = pkg;
+      sumTargets.textContent = [wantApk ? 'APK' : null, wantAab ? 'AAB' : null].filter(Boolean).join(' • ');
+
+      // Progress simulation
+      results.classList.add('hidden');
+      progressWrap.classList.remove('hidden');
+      progressText.textContent = 'Validating link…';
+      progressBar.style.width = '18%';
+
+      setTimeout(() => {
+        progressText.textContent = 'Preparing files…';
+        progressBar.style.width = '52%';
+      }, 800);
+
+      setTimeout(() => {
+        progressText.textContent = 'Generating starter pack…';
+        progressBar.style.width = '84%';
+      }, 1600);
+
+      setTimeout(() => {
+        progressText.textContent = 'Done!';
+        progressBar.style.width = '100%';
+        setTimeout(() => {
+          progressWrap.classList.add('hidden');
+          results.classList.remove('hidden');
+          pulse(results);
+          // Attach download handlers with latest values
+          attachDownloadHandlers({ url, name, pkg, wantApk, wantAab, color: iconColor.value });
+
+          if (zipAllBtn) {
+            zipAllBtn.onclick = async () => {
+              const files = gatherFiles({ url, name, pkg, color: iconColor.value });
+              await downloadZip(files);
+              pulse(zipAllBtn);
+            };
+          }
+
+          if (viewReadmeBtn && stepsModal) {
+            viewReadmeBtn.onclick = () => {
+              stepsModal.classList.remove('hidden');
+              stepsModal.classList.add('flex');
+              showStepsMode();
+              pulse(viewReadmeBtn);
+            };
+          }
+          const viewReadmeFullBtn = document.getElementById('viewReadmeFull');
+          if (viewReadmeFullBtn && stepsModal) {
+            viewReadmeFullBtn.onclick = () => {
+              stepsModal.classList.remove('hidden');
+              stepsModal.classList.add('flex');
+              const readme = genReadme(name, pkg, url, true, true);
+              showReadmeMode(readme);
+              pulse(viewReadmeFullBtn);
+            };
+          }
+          if (closeStepsBtn && stepsModal) {
+            closeStepsBtn.onclick = () => {
+              stepsModal.classList.add('hidden');
+              stepsModal.classList.remove('flex');
+            };
+          }
+        }, 300);
+      }, 2400);
+    });
+
+    // Reset
+    resetBtn.addEventListener('click', () => {
+      siteUrl.value = '';
+      appName.value = '';
+      pkgName.value = '';
+      optApk.checked = true;
+      optAab.checked = true;
+      iconColor.value = '#10b981';
+      updateIconPreview();
+      progressWrap.classList.add('hidden');
+      results.classList.add('hidden');
+      progressBar.style.width = '0%';
+      progressText.textContent = 'Starting…';
+      pulse(resetBtn);
+    });
+
+    // Open site from summary
+    openSiteBtn.addEventListener('click', () => {
+      const url = sumLink.textContent;
+      if (isValidUrl(url)) window.open(url, '_blank');
+    });
+
+    // Small pulse animation helper
+    function pulse(el) {
+      el.classList.add('pulse-soft');
+      setTimeout(() => el.classList.remove('pulse-soft'), 800);
+    }
+
+    // Downloads
+    function showStepsMode() {
+      const steps = document.getElementById('stepsList');
+      const readme = document.getElementById('readmeContent');
+      if (steps && readme) {
+        steps.classList.remove('hidden');
+        readme.classList.add('hidden');
+      }
+    }
+    function showReadmeMode(text) {
+      const steps = document.getElementById('stepsList');
+      const readme = document.getElementById('readmeContent');
+      if (steps && readme) {
+        steps.classList.add('hidden');
+        readme.classList.remove('hidden');
+        const pre = readme.querySelector('pre');
+        if (pre) pre.textContent = text;
+      }
+    }
+
+    function attachDownloadHandlers(ctx) {
+      const { url, name, pkg, wantApk, wantAab, color } = ctx;
+
+      $$('.dl').forEach(btn => {
+        const type = btn.getAttribute('data-file');
+        btn.onclick = () => {
+          switch (type) {
+            case 'manifest':
+              downloadText('AndroidManifest.xml', genManifestXml(pkg, name, url));
+              break;
+            case 'activity': {
+              const code = genMainActivityKotlin(url).replace('PLACEHOLDER_PACKAGE', pkg);
+              downloadText('MainActivity.kt', code);
+              break;
+            }
+            case 'layout':
+              downloadText('activity_main.xml', genActivityLayoutXml());
+              break;
+            case 'gradle':
+              downloadText('app_build.gradle', genGradleApp(pkg, name));
+              break;
+            case 'projectGradle':
+              downloadText('build.gradle', genGradleProject());
+              break;
+            case 'settingsGradle':
+              downloadText('settings.gradle', genSettingsGradle(name));
+              break;
+            case 'pwa':
+              downloadText('manifest.json', genPwaManifest(name, color));
+              break;
+            case 'icon':
+              downloadSVG('icon.svg', genIconSvg(color));
+              break;
+            case 'readme':
+              downloadText('README.txt', genReadme(name, pkg, url, wantApk, wantAab));
+              break;
+          }
+          pulse(btn);
+        };
+      });
+    }
+
+    function gatherFiles({ url, name, pkg, color }) {
+      const files = [];
+      files.push({ name: 'AndroidManifest.xml', content: genManifestXml(pkg, name, url) });
+      files.push({ name: 'MainActivity.kt', content: genMainActivityKotlin(url).replace('PLACEHOLDER_PACKAGE', pkg) });
+      files.push({ name: 'activity_main.xml', content: genActivityLayoutXml() });
+      files.push({ name: 'app_build.gradle', content: genGradleApp(pkg, name) });
+      files.push({ name: 'build.gradle', content: genGradleProject() });
+      files.push({ name: 'settings.gradle', content: genSettingsGradle(name) });
+      files.push({ name: 'manifest.json', content: genPwaManifest(name, color) });
+      files.push({ name: 'icon.svg', content: genIconSvg(color) });
+      files.push({ name: 'README.txt', content: genReadme(name, pkg, url, true, true) });
+      return files;
+    }
+  </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'96ccdd7856f18f8e',t:'MTc1NDgwMTM1MC4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
